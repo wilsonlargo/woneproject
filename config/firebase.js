@@ -8,6 +8,8 @@ import {
     setPersistence,
     browserLocalPersistence,
     browserSessionPersistence,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
 import {
@@ -24,6 +26,7 @@ import {
     deleteField,
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
+
 // Utiliza las claves y credenciales de mi base de datos de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyBly3x5yVwF_j1OVhUKhPNNM5WipNNycCk",
@@ -32,14 +35,19 @@ const firebaseConfig = {
     storageBucket: "proyectowoneta.appspot.com",
     messagingSenderId: "731977884302",
     appId: "1:731977884302:web:e16d22dae218e201d19fdf"
-  };
+};
+
+
 
 // Inicializa Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app)
 const db = getFirestore(app);
 
 // Referencia a las colecciones de proyectos y objetivos
 const coleccionProyectos = collection(db, "proyectos");
+
+
 
 /* Funciones base para manejar la base de datos de proyectos */
 
@@ -108,3 +116,81 @@ GLOBAL.firestore = {
     getProyecto,
     updateProyecto,
 }
+
+
+//funciones de registro
+document.getElementById('btnInscribir').addEventListener("click", async (e) => {
+    e.preventDefault()
+
+    const email = document.getElementById("regEmail").value
+    const password = document.getElementById("regPass").value
+
+    try {
+        const crearcredencial = await createUserWithEmailAndPassword(auth, email, password)
+        const FormModal = document.querySelector("#SignModal")
+        const modal = bootstrap.Modal.getInstance(FormModal)
+
+        //modal.hide()
+
+    } catch (error) {
+
+        if (error.code === "auth/invalid-email") {
+            alert("Correo inválido")
+        }
+        else if (error.code === "auth/weak-password") {
+            alert("Contraseña débil")
+        }
+        else if (error.code === "auth/missing-password") {
+            alert("Escriba una contraseña")
+        }
+        else if (error.code === "auth/email-already-in-use") {
+            alert("Este usuario ya existe")
+        }
+        console.log(error.code)
+    }
+
+});
+
+//funciones de ingreso
+document.getElementById('btnIngresar').addEventListener("click", async (e) => {
+    
+    e.preventDefault()
+
+    const email = document.getElementById("inEmail").value
+    const password = document.getElementById("inPass").value
+
+    try {
+        const crearcredencial = await signInWithEmailAndPassword(auth, email, password)
+        alert("A ingredo exitosamente")
+
+    } catch (error) {
+        if (error.code === "auth/invalid-email") {
+            alert("Correo inválido")
+        }
+        else if (error.code === "auth/invalid-credential") {
+            alert("Los datos proporcionados no son válidos")
+        }
+        else if (error.code === "auth/missing-password") {
+            alert("Escriba una contraseña")
+        }
+        else if (error.code === "auth/email-already-in-use") {
+            alert("Este usuario ya existe")
+        }
+        console.log(error.code)
+    }
+
+});
+
+document.getElementById('mnSigOut').addEventListener("click", async (e) => {
+
+    await signOut(auth)
+    alert("ha salido de la aplicación")
+});
+
+onAuthStateChanged(auth, async (user) => {
+   
+    console.log(user)
+})
+
+
+

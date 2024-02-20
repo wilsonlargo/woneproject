@@ -1,45 +1,29 @@
+let ActiveProyect;
+
 const Language =
 {
-    nombre_proyecto: "Yukpa",
+    nombre: "Yukpa",
     idioma: "",
-    cod_dioma: "",
-
-    lexicon: [
-        {
-            vernacular: "",
-            nacional: "",
-            entry: [
-
-                {
-                    lx: "pota",
-                    mor: "raíz",
-                    gn: "mi boca",
-                    ge: "mi boca",
-                    dn: "mi boca",
-                    ps: "nombre",
-                    ph: "'pota",
-                    sd: [
-                        {
-                            dominio: "partes del cuerpo"
-                        }
-                    ],
-                    cr: "",
-                }
-            ]
-        }
-
-
-    ]
+    codIdioma: "",
+    lexicon: []
 }
-class Proyecto {
+class clsProyecto {
     constructor(nombre, idioma, codIdioma) {
         this.nombre = nombre;
         this.idioma = idioma;
         this.codIdioma = codIdioma;
-        this.lexicon = []
+        this.clsLexicon = []
     };
 
-   
+    //Sección de entradas para el lexico
+    addEntryLexicon(Entry) {
+        this.clsLexicon.push(Entry);
+    }
+    deleteEntryLexicon(id) {
+        this.clsLexicon.splice(id, 1);
+    }
+
+
     //Todo esta clase se deriva a una cadena tipo Json
     convertToJSON() {
         const cache = [];
@@ -52,51 +36,160 @@ class Proyecto {
         });
     }
 
+    static loadAsInstance(objProyecto) {
+        const loadEntries = (clsLexicon, parent) => {
+            return clsLexicon.map(Entrada => {
+                const EntradaObj = new Entry(Entrada.lx, Entrada.gn, parent);
+                return EntradaObj;
+            });
+        }
+
+
+
+        const proyecto = new clsProyecto(objProyecto.nombre, objProyecto.idioma, objProyecto.codIdioma);
+        proyecto.clsLexicon = loadEntries(objProyecto.clsLexicon, proyecto);
+
+
+        GLOBAL.state.proyecto = proyecto;
+        proyecto.id = objProyecto.id;
+        return proyecto;
+    }
+
+    GuardarProyecto() {
+        const id = GLOBAL.firestore.updateProyecto(
+            JSON.parse(ActiveProyect.convertToJSON()))
+
+
+    }
+
+    BorrarProyecto() {
+        alert(this.id)
+        GLOBAL.firestore.borrarProyecto(this.id);
+    }
 
     //-------------------------------------------------------
 
+    makerHtml() {
+        const contenedor = document.getElementById("contenedor-proyecto")
+        contenedor.innerHTML=""
+
+
+        const inPoyectoNombre = HTML.inputContol(this, "inProyectoNombre","Nombre proyecto")
+        contenedor.appendChild(inPoyectoNombre)
+        const intNombre = document.getElementById("inProyectoNombre")
+        intNombre.addEventListener('input', () => this.nombre = intNombre.value);
+        intNombre.value = this.nombre;
+
+
+        const inPoyectoIdioma = HTML.inputContol(this, "inProyectoIdioma","Nombre idioma")
+        contenedor.appendChild(inPoyectoIdioma)
+        const intIdioma = document.getElementById("inProyectoIdioma")
+        intIdioma.addEventListener('input', () => this.idioma = intIdioma.value);
+        intIdioma.value = this.idioma;
 
 
 
 
+
+    }
+}
+
+
+
+
+
+class Entry {
+    constructor(lx, gn) {
+        this.lx = lx;
+        this.gn = gn;
+    }
 }
 
 
 function CrearProyecto() {
-    //const proyecto = new Proyecto('yukpa', 'yukpa', '');
-    const id = GLOBAL.firestore.addProyecto(Language);
-    GLOBAL.state.proyecto = Language;
+    const Proyecto = new clsProyecto('Nuevo proyecto', 'Nuevo Idioma', 'Codigo');
+    //Luego agregamos esta clase y la convertimos a una base de datos y la salvamos.
+    const id = GLOBAL.firestore.addProyecto(
+        JSON.parse(Proyecto.convertToJSON()))
+    CargarProyectos()
 }
 
 function CargarProyectos() {
-    const cSelProyectos = document.getElementById("cSelProyecto");
-    cSelProyectos.innerHTML=""
+    document.getElementById("lstProyectos").hidden = false
+    const lstProyectos = document.getElementById("lstProyectos");
+    //Limpiamos el contenedor del proyecto
+    lstProyectos.innerHTML = ""
     const proyectos = GLOBAL.state.proyectos;
     if (proyectos.length === 0) {
         alert('No hay proyectos en la base de datos');
     } else {
+        let i = 0
         proyectos.forEach(proyecto => {
-            let cSelect = document.createElement("option")
-            cSelect.value = proyecto.id;
-            cSelect.textContent = proyecto.nombre_proyecto;
-            cSelProyectos.appendChild(cSelect)
+
+            let lstItem = document.createElement("a")
+            lstItem.className = "list-group-item list-group-item-action"
+            lstItem.href = "#";
+            lstItem.id = proyecto.id
+            let contador = i
+            lstItem.onclick = () => abrirProyecto(contador)
+            i++
+
+            let lstDiv = document.createElement("div")
+            lstDiv.className = "d-flex w-100 justify-content-between"
+
+            let lstH5 = document.createElement("h5")
+            lstH5.className = "mb-1";
+            lstH5.textContent = proyecto.nombre
+
+            let lstSmall = document.createElement("small")
+            lstSmall.className = "text-body-secondary";
+            var today = new Date()
+            lstSmall.textContent = today.toLocaleDateString("en-US");
+
+            lstDiv.appendChild(lstH5);
+            lstDiv.appendChild(lstSmall);
+
+            let lstP = document.createElement("p")
+            lstP.className = "mb-1";
+            lstP.textContent = proyecto.idioma
+
+            let lstSmall2 = document.createElement("small")
+            lstSmall2.className = "text-body-secondary";
+            lstSmall2.textContent = proyecto.id
+
+
+            lstItem.appendChild(lstDiv);
+            lstItem.appendChild(lstP);
+            lstItem.appendChild(lstSmall2);
+
+            lstProyectos.appendChild(lstItem)
+
         });
     }
-}
-
-function abrirProyecto(control) {
-    const proyectos = GLOBAL.state.proyectos[0];
-    //proyectos.nombre_proyecto="castellano"
-    proyectos.lexicon[0].entry[0].lx="yushe"
-    let proyecto = GLOBAL.firestore.updateProyecto(proyectos)
-
-    //Se puede hacer con el parceador y las clases, debo intentarlo del program manager
 
 
 }
+
+
+function abrirProyecto(id) {
+    ActiveProyect = clsProyecto.loadAsInstance(GLOBAL.state.proyectos[id]);
+    ActiveProyect.makerHtml()
+    document.getElementById("lstProyectos").hidden = true
+}
+
+function GuardarProyecto() {
+    ActiveProyect.GuardarProyecto();
+}
+
+function BorrarProyecto() {
+    ActiveProyect.BorrarProyecto();
+    CargarProyectos()
+}
+
 
 
 document.getElementById('mnCrearProyectos').addEventListener('click', CrearProyecto);
 document.getElementById('mnCargarProyectos').addEventListener('click', CargarProyectos);
-//document.getElementById('cSelProyecto').addEventListener("click", abrirProyecto);
+document.getElementById('mnGuardarProyecto').addEventListener("click", GuardarProyecto);
+document.getElementById('mnBorrarProyecto').addEventListener("click", BorrarProyecto);
 
