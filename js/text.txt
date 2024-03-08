@@ -1,0 +1,16 @@
+const loadAreas = (fromClsAreas) => {
+                return fromClsAreas.map(Areas => {
+                    const areaNew = new Area(Areas.nombre, Areas.detalle, Areas.administrador, Areas.funciones);
+                    areaNew.cslMandatos = loadMandatos(Areas.cslMandatos);
+    
+                    return areaNew;
+                })
+            }
+    
+            const loadMandatos = (fromClsMandatos) => {
+                return fromClsMandatos.map(mandato => {
+                    const mandatoNew = new Mandato(mandato.nombre);
+                    //actividadObj.evidencias = loadEvidencias(actividad.evidencias, actividadObj);
+                    return mandatoNew;
+                });
+            }
